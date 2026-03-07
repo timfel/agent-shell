@@ -2009,7 +2009,9 @@ For example:
   "Return path to SUBDIR for agent-shell data, creating it if needed.
 Calls `agent-shell-dot-subdir-function' to resolve the path.
 When the directory is first created inside a git repo and
-.agent-shell/ is not yet ignored, automatically add it to .gitignore."
+.agent-shell/ is not yet ignored, automatically add it to .gitignore.
+This gitignore update is a one-time operation: if the entry is later
+removed from .gitignore it will not be re-added."
   (unless (functionp agent-shell-dot-subdir-function)
     (error "agent-shell-dot-subdir-function must be set to a function"))
   (let ((dir (funcall agent-shell-dot-subdir-function subdir)))
