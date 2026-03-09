@@ -49,8 +49,15 @@
 (declare-function agent-shell--start "agent-shell")
 (declare-function agent-shell--state "agent-shell")
 (declare-function agent-shell-buffers "agent-shell")
+(declare-function agent-shell-copy-session-id "agent-shell")
 (declare-function agent-shell-cycle-session-mode "agent-shell")
 (declare-function agent-shell-interrupt "agent-shell")
+(declare-function agent-shell-open-transcript "agent-shell")
+(declare-function agent-shell-queue-request "agent-shell")
+(declare-function agent-shell-remove-pending-request "agent-shell")
+(declare-function agent-shell-resume-pending-requests "agent-shell")
+(declare-function agent-shell-view-acp-logs "agent-shell")
+(declare-function agent-shell-view-traffic "agent-shell")
 (declare-function agent-shell-next-permission-button "agent-shell")
 (declare-function agent-shell-other-buffer "agent-shell")
 (declare-function agent-shell-previous-permission-button "agent-shell")
@@ -645,6 +652,69 @@ buffer from the snapshot and switch to edit mode."
          (when viewport-buffer
            (with-current-buffer viewport-buffer
              (agent-shell-viewport--update-header))))))))
+
+(defun agent-shell-viewport-view-traffic ()
+  "View agent shell traffic buffer."
+  (interactive)
+  (agent-shell-viewport--ensure-buffer)
+  (let ((shell-buffer (or (agent-shell--current-shell)
+                          (user-error "Not in an agent-shell buffer"))))
+    (with-current-buffer shell-buffer
+      (agent-shell-view-traffic))))
+
+(defun agent-shell-viewport-view-acp-logs ()
+  "View agent shell ACP logs buffer."
+  (interactive)
+  (agent-shell-viewport--ensure-buffer)
+  (let ((shell-buffer (or (agent-shell--current-shell)
+                          (user-error "Not in an agent-shell buffer"))))
+    (with-current-buffer shell-buffer
+      (agent-shell-view-acp-logs))))
+
+(defun agent-shell-viewport-queue-request ()
+  "Queue or immediately send a request depending on shell busy state."
+  (interactive)
+  (agent-shell-viewport--ensure-buffer)
+  (let ((shell-buffer (or (agent-shell--current-shell)
+                          (user-error "Not in an agent-shell buffer"))))
+    (with-current-buffer shell-buffer
+      (call-interactively #'agent-shell-queue-request))))
+
+(defun agent-shell-viewport-resume-pending-requests ()
+  "Resume processing pending requests in the queue."
+  (interactive)
+  (agent-shell-viewport--ensure-buffer)
+  (let ((shell-buffer (or (agent-shell--current-shell)
+                          (user-error "Not in an agent-shell buffer"))))
+    (with-current-buffer shell-buffer
+      (agent-shell-resume-pending-requests))))
+
+(defun agent-shell-viewport-remove-pending-request ()
+  "Remove pending requests."
+  (interactive)
+  (agent-shell-viewport--ensure-buffer)
+  (let ((shell-buffer (or (agent-shell--current-shell)
+                          (user-error "Not in an agent-shell buffer"))))
+    (with-current-buffer shell-buffer
+      (call-interactively #'agent-shell-remove-pending-request))))
+
+(defun agent-shell-viewport-copy-session-id ()
+  "Copy the current session ID to the kill ring."
+  (interactive)
+  (agent-shell-viewport--ensure-buffer)
+  (let ((shell-buffer (or (agent-shell--current-shell)
+                          (user-error "Not in an agent-shell buffer"))))
+    (with-current-buffer shell-buffer
+      (agent-shell-copy-session-id))))
+
+(defun agent-shell-viewport-open-transcript ()
+  "Open the transcript file for the current agent-shell session."
+  (interactive)
+  (agent-shell-viewport--ensure-buffer)
+  (let ((shell-buffer (or (agent-shell--current-shell)
+                          (user-error "Not in an agent-shell buffer"))))
+    (with-current-buffer shell-buffer
+      (agent-shell-open-transcript))))
 
 ;; Continuously fetching position can get expensive. Cache it.
 (defvar-local agent-shell-viewport--position-cache nil
