@@ -853,7 +853,7 @@ Always prompts for agent selection, even if existing shells are available."
   (agent-shell '(4)))
 
 ;;;###autoload
-(defun agent-shell-clear ()
+(defun agent-shell-restart ()
   "Clear conversation by restarting the agent shell in the same project.
 
 Kills the current shell buffer (shutting down the ACP client) and
