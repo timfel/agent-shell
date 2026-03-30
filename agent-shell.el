@@ -176,6 +176,27 @@ Example:
              (map-elt choice :option-id))
     t))
 
+(defvar agent-shell-prompt-transform-functions nil
+  "List of hooks run before sending a prompt to the agent.
+
+Each function receives two positional arguments:
+
+  PROMPT       - the prompt string about to be sent
+  SHELL-BUFFER - the target agent shell buffer
+
+Must return the updated (or unchanged) prompt string.
+
+Example:
+
+  (add-hook #\\='agent-shell-prompt-transform-functions
+            (lambda (prompt shell-buffer)
+              (format \"[repo:%s]\\n\\n%s\"
+                      (file-name-nondirectory
+                       (directory-file-name
+                        (with-current-buffer shell-buffer
+                          default-directory)))
+                      prompt)))")
+
 (defcustom agent-shell-user-message-expand-by-default nil
   "Whether user message sections should be expanded by default.
 
@@ -4694,9 +4715,23 @@ If FILE-PATH is not an image, returns nil."
                     "\n")
    :create-new t))
 
+(defun agent-shell--run-prompt-transform-functions (prompt shell-buffer)
+  "Transform PROMPT for SHELL-BUFFER.
+
+Uses `agent-shell-prompt-transform-functions'."
+  (let ((current-prompt prompt))
+    (dolist (fn agent-shell-prompt-transform-functions current-prompt)
+      (when fn
+        (let ((result (funcall fn current-prompt shell-buffer)))
+          (unless (stringp result)
+            (error "Prompt transform function %S must return a string, got: %S"
+                   fn result))
+          (setq current-prompt result))))))
+
 (cl-defun agent-shell--send-command (&key prompt shell-buffer)
   "Send PROMPT to agent using SHELL-BUFFER."
-  (let* ((content-blocks (condition-case nil
+  (let* ((prompt (agent-shell--run-prompt-transform-functions prompt shell-buffer))
+         (content-blocks (condition-case nil
                              (agent-shell--build-content-blocks prompt)
                            (error `[((type . "text")
                                      (text . ,(substring-no-properties prompt)))])))

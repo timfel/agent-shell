@@ -515,6 +515,41 @@
         ;; Should be a single text block with the original prompt
         (should (equal prompt '[((type . "text") (text . "Test prompt with @file.txt"))]))))))
 
+(ert-deftest agent-shell--send-command-applies-prompt-transform-functions-test ()
+  "Test `agent-shell--send-command' applies prompt transform functions before sending."
+  (let ((sent-request nil)
+        (transcript-text nil)
+        (agent-shell-prompt-transform-functions
+         (list (lambda (prompt _shell-buffer)
+                 (concat prompt " world"))
+               (lambda (prompt _shell-buffer)
+                 (upcase prompt))))
+        (agent-shell--state (list
+                             (cons :client 'test-client)
+                             (cons :session (list (cons :id "test-session")))
+                             (cons :prompt-capabilities '((:embedded-context . t)))
+                             (cons :buffer (current-buffer))
+                             (cons :last-entry-type nil)
+                             (cons :active-requests nil))))
+
+    (cl-letf (((symbol-function 'acp-send-request)
+               (lambda (&rest args)
+                 (setq sent-request args)))
+              ((symbol-function 'agent-shell-viewport--buffer)
+               (lambda (&rest _) nil))
+              ((symbol-function 'agent-shell--append-transcript)
+               (lambda (&rest args)
+                 (setq transcript-text (plist-get args :text)))))
+      (agent-shell--send-command
+       :prompt "hello"
+       :shell-buffer (current-buffer))
+
+      (let* ((request (plist-get sent-request :request))
+             (params (map-elt request :params))
+             (prompt (map-elt params 'prompt)))
+        (should (equal prompt '[((type . "text") (text . "HELLO WORLD"))])))
+      (should (string-match-p (regexp-quote "HELLO WORLD") transcript-text)))))
+
 (ert-deftest agent-shell--send-command-emits-turn-complete-event-test ()
   "Test `agent-shell--send-command' emits turn-complete on success."
   (let ((received-events nil)
